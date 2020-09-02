@@ -7,7 +7,7 @@ This caches the data on start up and keeps it in memory on start up. Utilizes up
 
 Requires Node [v12](https://nodejs.org/download/release/latest-v12.x/) or above.
 
-## Installation
+## Installation and Running Locally
 
 Use the package manager [npm](https://www.npmjs.com/get-npm) to set up and run divvy-service.
 
@@ -15,6 +15,13 @@ Use the package manager [npm](https://www.npmjs.com/get-npm) to set up and run d
 npm install
 npm run start
 ```
+
+To run test cases
+```bash
+npm run test
+```
+
+ENV variables can be overrode by creating a new ```env``` file. Default ENV is being loaded from ```.env.defaults```. 
 
 ## Postman
 Use this [link](https://www.getpostman.com/collections/48c500ff191c0b4092ba) to download the postman collection. 
