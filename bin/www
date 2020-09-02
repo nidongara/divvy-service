@@ -1,0 +1,142 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+const app = require('../src/app');
+const debug = require('debug')('divvy-service:server');
+const http = require('http');
+const os = require("os");
+const cluster = require("cluster")
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+const port = normalizePort(process.env.PORT || '3000');
+let clusterWorkerSize = os.cpus().length;
+
+app.set('port', port);
+
+if (clusterWorkerSize > 1) {
+
+  // Limiting the cluster size to 4 to save memory
+  if (cluster.isMaster) {
+    console.log("Cluster worker size", clusterWorkerSize)
+    if(clusterWorkerSize > 4){
+      console.log("Limiting cluster size to 4")
+      clusterWorkerSize = 4
+    }
+    for (let i=0; i < clusterWorkerSize; i++) {
+      cluster.fork()
+    }
+
+    cluster.on("exit", function(worker) {
+      console.log("Worker", worker.id, " has exited.")
+    })
+  } else {
+    /**
+     * Create HTTP server.
+     */
+
+    const server = http.createServer(app);
+
+    /**
+     * Listen on provided port, on all network interfaces.
+     */
+    app.on("cacheInitialized", () =>{
+      server.listen(port);
+    });
+
+    server.on('error', onError);
+    server.on('listening', () => {
+      const addr = server.address();
+      const bind = typeof addr === 'string'
+        ? 'pipe ' + addr
+        : 'port ' + addr.port;
+      debug('Listening on ' + bind);
+    });
+  }
+} else {
+  /**
+   * Create HTTP server.
+   */
+
+  const server = http.createServer(app);
+
+  /**
+   * Listen on provided port, on all network interfaces.
+   */
+  app.on("cacheInitialized", () =>{
+    server.listen(port);
+  });
+
+  server.on('error', onError);
+  server.on('listening', () => {
+    const addr = server.address();
+    const bind = typeof addr === 'string'
+      ? 'pipe ' + addr
+      : 'port ' + addr.port;
+    debug('Listening on ' + bind);
+  });
+  /**
+   * Event listener for HTTP server "listening" event.
+   */
+
+
+}
+
+
+
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  const port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  const bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+  case 'EACCES':
+    console.error(bind + ' requires elevated privileges');
+    process.exit(1);
+    break;
+  case 'EADDRINUSE':
+    console.error(bind + ' is already in use');
+    process.exit(1);
+    break;
+  default:
+    throw error;
+  }
+}
+
+
